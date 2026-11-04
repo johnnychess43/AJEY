@@ -56,7 +56,7 @@ export default function AuthPage() {
     <section className="flex min-h-screen items-center justify-center px-5 py-12">
       <div className="w-full max-w-md">
         <Link href="/" className="mb-12 inline-flex items-center gap-2 text-xs font-bold text-[#85829a]"><ArrowLeft size={15}/> Back to AJEY</Link>
-        <div className="mb-8 lg:hidden"><div className="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-[#211d48] text-xl font-black text-white">A</div><div className="text-2xl font-black">AJEY</div></div>
+        <div className="mb-8 lg:hidden"><img src="/ajey-logo.jpg" alt="AJEY — Since 2026" className="mb-4 h-[116px] w-[148px] rounded-2xl object-contain" /></div>
         <div className="mb-7"><div className="mb-2 text-[10px] font-extrabold tracking-[.2em] text-[#8b75dc]">WELCOME TO YOUR NEXT CHAPTER</div><h2 className="text-3xl font-black">{mode==="signup"?"Create your account":"Welcome back"}</h2><p className="mt-2 text-sm text-[#9290a7]">{mode==="signup"?"Start building a life of learning and purpose.":"Sign in to continue learning and growing."}</p></div>
         <div className="mb-6 grid grid-cols-2 rounded-xl bg-[#efedf5] p-1"><button onClick={()=>setMode("signup")} className={`rounded-lg py-2.5 text-xs font-bold ${mode==="signup"?"bg-white text-[#6d53cf] shadow-sm":"text-[#85829a]"}`}>Create account</button><button onClick={()=>setMode("login")} className={`rounded-lg py-2.5 text-xs font-bold ${mode==="login"?"bg-white text-[#6d53cf] shadow-sm":"text-[#85829a]"}`}>Sign in</button></div>
         <form onSubmit={submit} className="space-y-4">
