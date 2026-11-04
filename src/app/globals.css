@@ -1,0 +1,5 @@
+@import "tailwindcss";
+:root{--ink:#202044;--muted:#777994;--purple:#7357d8;--line:#eeedf5;--surface:#fff;--bg:#f8f8fc}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-jakarta),Arial,sans-serif}
+button,input,textarea{font:inherit}button{cursor:pointer}.panel{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 8px 24px rgba(46,35,100,.035)}
+.gradient-text{background:linear-gradient(90deg,#7657dd,#36a9a3);-webkit-background-clip:text;background-clip:text;color:transparent}
