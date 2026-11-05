@@ -118,8 +118,8 @@ button { cursor: pointer; }
 .ajey-shell button:hover:not(:disabled) { filter: brightness(1.12); }
 .ajey-shell button:disabled { cursor: not-allowed; }
 .ajey-shell .gold-button,
-.ajey-shell button.bg-\\[\\#7358d6\\],
-.ajey-shell button.bg-\\[\\#7357d8\\] {
+.ajey-shell button[class*="bg-[#7358d6]"],
+.ajey-shell button[class*="bg-[#7357d8]"] {
   color: #211707 !important;
   background: linear-gradient(120deg, #ffe18b, #d9a33a 55%, #b77a20) !important;
   border: 1px solid rgba(255,225,139,.48);
@@ -144,18 +144,18 @@ button { cursor: pointer; }
 .ajey-shell .lesson-notes { color: #d9d1e1 !important; }
 .ajey-shell .lesson-notes h2, .ajey-shell .lesson-notes strong { color: #f4d27b; }
 .ajey-shell footer { border-color: #383143 !important; }
-.ajey-shell .bg-\\[\\#f6f3ff\\],
-.ajey-shell .bg-\\[\\#f7f5ff\\],
-.ajey-shell .bg-\\[\\#fbfaff\\],
-.ajey-shell .bg-\\[\\#f4f1ff\\],
-.ajey-shell .bg-\\[\\#f0edff\\] {
+.ajey-shell [class*="bg-[#f6f3ff]"],
+.ajey-shell [class*="bg-[#f7f5ff]"],
+.ajey-shell [class*="bg-[#fbfaff]"],
+.ajey-shell [class*="bg-[#f4f1ff]"],
+.ajey-shell [class*="bg-[#f0edff]"] {
   background: rgba(222,174,68,.09) !important;
   color: #ead9b4 !important;
 }
-.ajey-shell .text-\\[\\#9290a7\\],
-.ajey-shell .text-\\[\\#aaa8b7\\],
-.ajey-shell .text-\\[\\#aaa3b6\\],
-.ajey-shell .text-\\[\\#77778e\\] { color: #aaa1b4 !important; }
+.ajey-shell [class*="text-[#9290a7]"],
+.ajey-shell [class*="text-[#aaa8b7]"],
+.ajey-shell [class*="text-[#aaa3b6]"],
+.ajey-shell [class*="text-[#77778e]"] { color: #aaa1b4 !important; }
 
 .auth-shell {
   min-height: 100vh;
@@ -169,11 +169,11 @@ button { cursor: pointer; }
 .auth-shell h1, .auth-shell h2, .auth-shell label { color: #f7f1e7 !important; }
 .auth-shell input { color: #fff !important; background: #17131f !important; border-color: #40374b !important; }
 .auth-shell input::placeholder { color: #82798f !important; }
-.auth-shell button.bg-\\[\\#7358d6\\] {
+.auth-shell button[class*="bg-[#7358d6]"] {
   color: #211707 !important;
   background: linear-gradient(120deg,#ffe18b,#d9a33a 55%,#b77a20) !important;
 }
-.auth-shell .bg-\\[\\#efedf5\\] { background: #211c2b !important; }
+.auth-shell [class*="bg-[#efedf5]"] { background: #211c2b !important; }
 .auth-shell .bg-white { background: #282231 !important; color: #f4d27b !important; }
 
 @media (prefers-reduced-motion: reduce) {
