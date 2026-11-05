@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { generateAIText } from "@/lib/ai";
 
 export const runtime = "nodejs";
 
@@ -31,127 +32,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "One or more messages are invalid." }, { status: 400 });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY?.trim();
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "AJEY's Gemini connection is not configured yet. Add GEMINI_API_KEY to the Vercel project environment variables." },
-        { status: 503 }
-      );
-    }
-
-    const contents = messages.map((message: { role: "user" | "assistant"; content: string }) => ({
-      role: message.role === "assistant" ? "model" : "user",
-      parts: [{ text: message.content }]
+    const conversation = messages.map((message: { role: "user" | "assistant"; content: string }) => ({
+      role: message.role,
+      content: message.content
     }));
 
-    const requestBody = JSON.stringify({
-      systemInstruction: {
-        parts: [{
-          text: "You are AJEY, a supportive learning and productivity assistant. Explain concepts clearly, adapt to the learner's level, help users plan realistically, and encourage healthy habits. Give practical, structured answers. You can suggest tasks and reminders, but never claim to have saved, changed, scheduled, or sent anything unless an authorized integration actually confirms that action. Be honest when you do not know something."
-        }]
+    const result = await generateAIText([
+      {
+        role: "system",
+        content: "You are AJEY, a supportive learning and productivity assistant. Explain concepts clearly, adapt to the learner's level, help users plan realistically, and encourage healthy habits. Give practical, structured answers. You can suggest tasks and reminders, but never claim to have saved, changed, scheduled, or sent anything unless an authorized integration actually confirms that action. Be honest when you do not know something."
       },
-      contents,
-      generationConfig: {
-        temperature: 0.6,
-        maxOutputTokens: 900
-      }
-    });
+      ...conversation
+    ], { temperature: 0.6, maxTokens: 1000 });
 
-    // Start with Google's recommended stable Flash model, then rotate through
-    // independent stable model endpoints when capacity or quota is constrained.
-    const modelCandidates = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash-lite"];
-    let response: Response | undefined;
-    let lastNetworkError = "";
-    for (const model of modelCandidates) {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-goog-api-key": apiKey
-              },
-              body: requestBody,
-              cache: "no-store",
-              signal: AbortSignal.timeout(15_000)
-            }
-          );
-          lastNetworkError = "";
-        } catch (error) {
-          lastNetworkError = error instanceof Error ? error.name : "NetworkError";
-          response = undefined;
-          if (attempt === 0) {
-            await new Promise(resolve => setTimeout(resolve, 300));
-            continue;
-          }
-          break;
-        }
-
-        const retryable = [408, 429, 500, 502, 503, 504].includes(response.status);
-        if (!retryable) break;
-        if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 300));
-      }
-      if (response?.ok || (response && ![408, 429, 500, 502, 503, 504].includes(response.status))) break;
-    }
-
-    if (!response?.ok) {
-      let upstreamMessage = lastNetworkError ? "Gemini request timed out or could not connect." : "";
-      let upstreamStatus = "";
-      try {
-        const failure = response ? await response.json() : undefined;
-        upstreamMessage = typeof failure?.error?.message === "string"
-          ? failure.error.message.slice(0, 200)
-          : "";
-        upstreamStatus = typeof failure?.error?.status === "string"
-          ? failure.error.status.slice(0, 50)
-          : "";
-      } catch {
-        // Keep the diagnostic safe if Google returned a non-JSON response.
-      }
-
-      console.error("Gemini assistant request failed", {
-        httpStatus: response?.status ?? 0,
-        apiStatus: upstreamStatus || "UNKNOWN",
-        message: upstreamMessage || "No diagnostic message returned"
-      });
-
-      let error = "AJEY could not get a response from Gemini. Please try again shortly.";
-      if (response?.status === 401 || response?.status === 403) {
-        error = "Gemini authentication or permission failed. Check that the API key is active and has Gemini API access.";
-      } else if (response?.status === 429) {
-        error = "Gemini usage limits have been reached. Check your Google AI Studio quota and try again later.";
-      } else if (response?.status === 503 || (response?.status ?? 0) >= 500 || lastNetworkError) {
-        error = "Google Gemini is temporarily busy. AJEY retried automatically; please try again in a minute.";
-      }
-
-      return NextResponse.json(
-        {
-          error,
-          diagnostic: {
-            httpStatus: response?.status ?? 0,
-            apiStatus: upstreamStatus || "UNKNOWN",
-            message: upstreamMessage || undefined
-          }
-        },
-        { status: 502 }
-      );
-    }
-
-    const result = await response.json();
-    const reply = result.candidates?.[0]?.content?.parts
-      ?.map((part: { text?: string }) => part.text ?? "")
-      .join("")
-      .trim();
-
-    if (!reply) {
-      return NextResponse.json({ error: "Gemini returned an empty response. Please try again." }, { status: 502 });
-    }
-
-    return NextResponse.json({ reply });
+    return NextResponse.json({ reply: result.text, provider: result.provider });
   } catch (error) {
-    console.error("AJEY assistant route failed", error);
-    return NextResponse.json({ error: "AJEY could not process that message. Please try again." }, { status: 500 });
+    const reason = error instanceof Error ? error.message : "UNKNOWN";
+    console.error("AJEY assistant providers failed", { reason });
+    const missingKeys = reason === "AI_KEYS_MISSING";
+    return NextResponse.json(
+      {
+        error: missingKeys
+          ? "AJEY AI is not configured. Add OPENAI_API_KEY and/or NVIDIA_API_KEY in Vercel."
+          : "AJEY could not reach its AI providers just now. Please try again shortly."
+      },
+      { status: missingKeys ? 503 : 502 }
+    );
   }
 }
