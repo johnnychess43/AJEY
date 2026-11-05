@@ -30,37 +30,51 @@ Use this structure with clear headings:
 8. Five practice questions, with answers in a separate answer key at the end.
 Keep the notes educational, specific to the requested topic, and suitable for a student. If the topic is broad, introduce it and cover its most important foundations. Do not invent citations or claim to have used a textbook.`;
 
-    // Prefer Flash-Lite for lesson generation, then fall back to Flash
-    // when Google reports temporary capacity or rate-limit pressure.
+    // Use Google's recommended stable Flash model first, then rotate through
+    // additional stable endpoints if Google reports capacity or rate-limit pressure.
     const lessonRequestBody = JSON.stringify({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       generationConfig: { temperature: 0.35, maxOutputTokens: 2200 }
     });
-    const modelCandidates = ["gemini-3.5-flash-lite", "gemini-3.8-flash"];
+    const modelCandidates = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash-lite"];
     let notesResponse: Response | undefined;
+    let lastNetworkError = "";
     for (const model of modelCandidates) {
       for (let attempt = 0; attempt < 2; attempt++) {
-        notesResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-goog-api-key": geminiKey
-            },
-            body: lessonRequestBody,
-            cache: "no-store"
+        try {
+          notesResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": geminiKey
+              },
+              body: lessonRequestBody,
+              cache: "no-store",
+              signal: AbortSignal.timeout(15_000)
+            }
+          );
+          lastNetworkError = "";
+        } catch (error) {
+          lastNetworkError = error instanceof Error ? error.name : "NetworkError";
+          notesResponse = undefined;
+          if (attempt === 0) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            continue;
           }
-        );
+          break;
+        }
 
         const retryable = [408, 429, 500, 502, 503, 504].includes(notesResponse.status);
         if (!retryable) break;
-        if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 500));
+        if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 300));
       }
-      if (notesResponse?.ok || ![408, 429, 500, 502, 503, 504].includes(notesResponse?.status ?? 0)) break;
+      if (notesResponse?.ok || (notesResponse && ![408, 429, 500, 502, 503, 504].includes(notesResponse.status))) break;
     }
     if (!notesResponse) {
-      return NextResponse.json({ error: "AJEY could not reach Gemini. Please try again." }, { status: 502 });
+      console.error("Gemini lesson request could not connect", { reason: lastNetworkError || "No response" });
+      return NextResponse.json({ error: "Gemini did not respond in time. Please try again shortly." }, { status: 502 });
     }
 
     if (!notesResponse.ok) {
