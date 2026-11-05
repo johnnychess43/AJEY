@@ -30,22 +30,38 @@ Use this structure with clear headings:
 8. Five practice questions, with answers in a separate answer key at the end.
 Keep the notes educational, specific to the requested topic, and suitable for a student. If the topic is broad, introduce it and cover its most important foundations. Do not invent citations or claim to have used a textbook.`;
 
-    // Send the key in the documented API-key header rather than the URL.
-    const notesResponse = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": geminiKey
-        },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.35, maxOutputTokens: 2200 }
-        }),
-        cache: "no-store"
+    // Prefer Flash-Lite for lesson generation, then fall back to Flash
+    // when Google reports temporary capacity or rate-limit pressure.
+    const lessonRequestBody = JSON.stringify({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.35, maxOutputTokens: 2200 }
+    });
+    const modelCandidates = ["gemini-3.5-flash-lite", "gemini-3.8-flash"];
+    let notesResponse: Response | undefined;
+    for (const model of modelCandidates) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        notesResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": geminiKey
+            },
+            body: lessonRequestBody,
+            cache: "no-store"
+          }
+        );
+
+        const retryable = [408, 429, 500, 502, 503, 504].includes(notesResponse.status);
+        if (!retryable) break;
+        if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 500));
       }
-    );
+      if (notesResponse?.ok || ![408, 429, 500, 502, 503, 504].includes(notesResponse?.status ?? 0)) break;
+    }
+    if (!notesResponse) {
+      return NextResponse.json({ error: "AJEY could not reach Gemini. Please try again." }, { status: 502 });
+    }
 
     if (!notesResponse.ok) {
       let upstreamMessage = "";
