@@ -57,26 +57,32 @@ export async function POST(req: Request) {
       }
     });
 
-    // Send the key in Google's API-key header, not in the URL.
-    // Retry only transient failures with short exponential backoff.
+    // Prefer the high-throughput Flash-Lite model, then fall back to Flash
+    // if Google reports temporary capacity or rate-limit pressure.
+    const modelCandidates = ["gemini-3.5-flash-lite", "gemini-3.8-flash"];
     let response: Response | undefined;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey
-          },
-          body: requestBody,
-          cache: "no-store"
-        }
-      );
+    for (const model of modelCandidates) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": apiKey
+            },
+            body: requestBody,
+            cache: "no-store"
+          }
+        );
 
-      const retryable = [408, 429, 500, 502, 503, 504].includes(response.status);
-      if (!retryable || attempt === 2) break;
-      await new Promise(resolve => setTimeout(resolve, 600 * (attempt + 1)));
+        const retryable = [408, 429, 500, 502, 503, 504].includes(response.status);
+        if (!retryable) break;
+        if (attempt === 0) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      if (response?.ok || ![408, 429, 500, 502, 503, 504].includes(response?.status ?? 0)) break;
     }
 
     if (!response?.ok) {
