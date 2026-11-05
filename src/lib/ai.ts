@@ -23,7 +23,7 @@ async function requestProvider(
         Authorization: `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: isOpenAI ? "gpt-4.1-mini" : "meta/llama-3.3-70b-instruct",
+        model: isOpenAI ? "gpt-4.1-mini" : "nvidia/nemotron-3.5-bolt-e4b",
         messages,
         max_tokens: maxTokens,
         temperature,
