@@ -57,39 +57,50 @@ export async function POST(req: Request) {
       }
     });
 
-    // Prefer the high-throughput Flash-Lite model, then fall back to Flash
-    // if Google reports temporary capacity or rate-limit pressure.
-    const modelCandidates = ["gemini-3.5-flash-lite", "gemini-3.8-flash"];
+    // Start with Google's recommended stable Flash model, then rotate through
+    // independent stable model endpoints when capacity or quota is constrained.
+    const modelCandidates = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash-lite"];
     let response: Response | undefined;
+    let lastNetworkError = "";
     for (const model of modelCandidates) {
       for (let attempt = 0; attempt < 2; attempt++) {
-        response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-goog-api-key": apiKey
-            },
-            body: requestBody,
-            cache: "no-store"
+        try {
+          response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": apiKey
+              },
+              body: requestBody,
+              cache: "no-store",
+              signal: AbortSignal.timeout(15_000)
+            }
+          );
+          lastNetworkError = "";
+        } catch (error) {
+          lastNetworkError = error instanceof Error ? error.name : "NetworkError";
+          response = undefined;
+          if (attempt === 0) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            continue;
           }
-        );
+          break;
+        }
 
         const retryable = [408, 429, 500, 502, 503, 504].includes(response.status);
         if (!retryable) break;
-        if (attempt === 0) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
+        if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 300));
       }
-      if (response?.ok || ![408, 429, 500, 502, 503, 504].includes(response?.status ?? 0)) break;
+      if (response?.ok || (response && ![408, 429, 500, 502, 503, 504].includes(response.status))) break;
     }
 
     if (!response?.ok) {
-      let upstreamMessage = "";
+      let upstreamMessage = lastNetworkError ? "Gemini request timed out or could not connect." : "";
       let upstreamStatus = "";
       try {
-        const failure = await response?.json();
+        const failure = response ? await response.json() : undefined;
         upstreamMessage = typeof failure?.error?.message === "string"
           ? failure.error.message.slice(0, 200)
           : "";
@@ -111,7 +122,7 @@ export async function POST(req: Request) {
         error = "Gemini authentication or permission failed. Check that the API key is active and has Gemini API access.";
       } else if (response?.status === 429) {
         error = "Gemini usage limits have been reached. Check your Google AI Studio quota and try again later.";
-      } else if (response?.status === 503 || (response?.status ?? 0) >= 500) {
+      } else if (response?.status === 503 || (response?.status ?? 0) >= 500 || lastNetworkError) {
         error = "Google Gemini is temporarily busy. AJEY retried automatically; please try again in a minute.";
       }
 
