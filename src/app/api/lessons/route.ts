@@ -129,7 +129,10 @@ Keep the notes educational, specific to the requested topic, and suitable for a 
       const youtubeUrl = new URL("https://www.googleapis.com/youtube/v3/search");
       youtubeUrl.searchParams.set("part", "snippet");
       youtubeUrl.searchParams.set("type", "video");
-      youtubeUrl.searchParams.set("maxResults", "5");
+      youtubeUrl.searchParams.set("maxResults", "6");
+      youtubeUrl.searchParams.set("videoEmbeddable", "true");
+      youtubeUrl.searchParams.set("relevanceLanguage", "en");
+      youtubeUrl.searchParams.set("order", "relevance");
       youtubeUrl.searchParams.set("safeSearch", "strict");
       youtubeUrl.searchParams.set("q", topic + " lesson tutorial");
       youtubeUrl.searchParams.set("key", youtubeKey);
@@ -151,10 +154,18 @@ Keep the notes educational, specific to the requested topic, and suitable for a 
               url: `https://www.youtube.com/watch?v=${videoId}`
             }];
           });
+          if (videos.length === 0) {
+            console.warn("YouTube lesson search returned no embeddable videos", { status: videoResponse.status });
+          }
+        } else {
+          // Do not fail lesson generation if YouTube quota or API access is unavailable.
+          console.warn("YouTube lesson search unavailable", { status: videoResponse.status });
         }
       } catch (error) {
-        console.error("YouTube lesson search failed", error);
+        console.error("YouTube lesson search failed", error instanceof Error ? error.message : "Unknown error");
       }
+    } else {
+      console.warn("YouTube lesson search skipped: YOUTUBE_API_KEY is not configured");
     }
 
     return NextResponse.json({ topic, notes, videos, youtubeSearchUrl });
