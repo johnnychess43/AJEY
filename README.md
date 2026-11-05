@@ -16,7 +16,7 @@ AJEY is an AI-assisted learning and productivity workspace built with Next.js, T
 1. Install Node.js 20 or newer.
 2. Run `npm install`.
 3. Copy `.env.example` to `.env.local`.
-4. Add Supabase URL and anon key. Add `OPENAI_API_KEY` to activate AI replies.
+4. Add the Supabase URL and publishable key. Add `GEMINI_API_KEY` to activate AI replies.
 5. Run `npm run dev` and visit `http://localhost:3000`.
 
 The dashboard includes demo interactions. Tasks, reminders and goals are currently held in client state; they are not yet persisted across devices. Supabase authentication and persistent CRUD are the next integration stage.
@@ -25,7 +25,7 @@ The dashboard includes demo interactions. Tasks, reminders and goals are current
 Create a Supabase project, add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to local/Vercel environment variables, then run `supabase/schema.sql` in the SQL Editor. The schema enables owner-scoped row-level security for profiles, goals, tasks, reminders, learning progress and notes. Never expose a service-role key in browser code.
 
 ## AI
-Set `OPENAI_API_KEY` as a server-only environment variable. It is read by `src/app/api/assistant/route.ts` and must not use the `NEXT_PUBLIC_` prefix.
+Set `GEMINI_API_KEY` as a server-only environment variable in Vercel and local `.env.local`. It is read only by `src/app/api/assistant/route.ts`; never add a `NEXT_PUBLIC_` prefix or commit the real key. AJEY uses Google's Gemini Developer API.
 
 ## Deploy
 Import this repository into Vercel, select Next.js, and connect `main` as the production branch. Add the environment variables in Vercel before enabling live integrations.
