@@ -46,7 +46,7 @@ export default function AuthPage() {
     } finally { setBusy(false); }
   }
 
-  return <main className="min-h-screen bg-[#f8f7fc] lg:grid lg:grid-cols-2">
+  return <main className="auth-shell min-h-screen lg:grid lg:grid-cols-2">
     <section className="relative hidden overflow-hidden bg-[#211d48] p-12 text-white lg:flex lg:flex-col lg:justify-between">
       <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-[#7657dd]/30 blur-3xl"/>
       <div className="relative flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-white text-xl font-black text-[#211d48]">A</div><span className="text-2xl font-black">AJEY</span></div>
