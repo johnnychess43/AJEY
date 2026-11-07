@@ -45,7 +45,22 @@ Keep the notes educational, specific to the requested topic, and suitable for a 
           signal: AbortSignal.timeout(12_000)
         });
         if (!response.ok) {
-          console.warn("YouTube lesson search unavailable", { status: response.status });
+          // Google returns a structured error body (for example quotaExceeded,
+          // accessNotConfigured, or keyInvalid). Log only the safe error fields;
+          // never log the API key or the full request URL.
+          let youtubeError: { error?: { code?: number; message?: string; errors?: Array<{ reason?: string; domain?: string }> } } = {};
+          try {
+            youtubeError = await response.json();
+          } catch {
+            // Keep the status-only diagnostic if Google did not return JSON.
+          }
+          console.warn("YouTube lesson search unavailable", {
+            status: response.status,
+            code: youtubeError.error?.code,
+            message: youtubeError.error?.message,
+            reasons: youtubeError.error?.errors?.map((entry) => entry.reason),
+            domains: youtubeError.error?.errors?.map((entry) => entry.domain)
+          });
           return [];
         }
         const data = await response.json();
