@@ -30,25 +30,21 @@ export async function completeVerifiedPayment(transactionId: string, expectedTxR
     updated_at: new Date().toISOString()
   }).eq("id", order.id);
 
-  const { data: existing } = await admin
-    .from("certificates")
-    .select("id,certificate_number")
-    .eq("payment_order_id", order.id)
-    .maybeSingle();
-
-  if (existing) return existing;
-
   const certificateNumber = `AJY-${new Date().getFullYear()}-${randomUUID().replaceAll("-", "").slice(0, 10).toUpperCase()}`;
-  const { data: certificate, error: certificateError } = await admin
+  const { error: certificateError } = await admin
     .from("certificates")
-    .insert({
+    .upsert({
       user_id: order.user_id,
       payment_order_id: order.id,
       course_slug: order.course_slug,
       certificate_number: certificateNumber
-    })
-    .select("id,certificate_number")
-    .single();
+    }, { onConflict: "payment_order_id", ignoreDuplicates: true });
   if (certificateError) throw certificateError;
+  const { data: certificate, error: readError } = await admin
+    .from("certificates")
+    .select("id,certificate_number")
+    .eq("payment_order_id", order.id)
+    .single();
+  if (readError || !certificate) throw new Error("CERTIFICATE_ISSUANCE_FAILED");
   return certificate;
 }
