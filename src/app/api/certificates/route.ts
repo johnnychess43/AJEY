@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getCertificatePrice } from "@/lib/payments/flutterwave";
+import { getCertificatePrice } from "@/lib/payments/intasend";
 
 export const runtime = "nodejs";
 
