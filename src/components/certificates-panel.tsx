@@ -76,6 +76,6 @@ export default function CertificatesPanel() {
         </article>;
       })}
     </div>
-    <p className="text-[10px] leading-5 text-[#8f899c]">Payments are processed by Flutterwave. M-Pesa is available for KES transactions; card availability depends on your payment provider account being enabled and verified.</p>
+    <p className="text-[10px] leading-5 text-[#8f899c]">Payments are securely processed by IntaSend. Available payment methods depend on your IntaSend account settings and the selected currency.</p>
   </section>;
 }
