@@ -41,6 +41,8 @@ export async function POST(request: Request) {
     }
 
     const admin = createAdminClient();
+    const { data: alreadyIssued } = await admin.from("certificates").select("id").eq("user_id", user.id).eq("course_slug", courseSlug).maybeSingle();
+    if (alreadyIssued) return NextResponse.json({ error: "A certificate has already been issued for this course." }, { status: 409 });
     const txRef = `AJEY-${randomUUID()}`;
     const { data: order, error: insertError } = await admin
       .from("payment_orders")
