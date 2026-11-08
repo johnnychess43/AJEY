@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createFlutterwaveCheckout, getCertificatePrice } from "@/lib/payments/flutterwave";
+import { createIntaSendCheckout, getCertificatePrice } from "@/lib/payments/intasend";
 
 export const runtime = "nodejs";
 
@@ -14,8 +14,8 @@ const allowedCourses = new Set([
 
 export async function POST(request: Request) {
   try {
-    const origin = request.headers.get("origin");
-    if (origin && origin !== new URL(request.url).origin) {
+    const requestOrigin = request.headers.get("origin");
+    if (requestOrigin && requestOrigin !== new URL(request.url).origin) {
       return NextResponse.json({ error: "Cross-origin checkout requests are not allowed." }, { status: 403 });
     }
     const auth = await createClient();
@@ -47,6 +47,7 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const { data: alreadyIssued } = await admin.from("certificates").select("id").eq("user_id", user.id).eq("course_slug", courseSlug).maybeSingle();
     if (alreadyIssued) return NextResponse.json({ error: "A certificate has already been issued for this course." }, { status: 409 });
+
     const txRef = `AJEY-${randomUUID()}`;
     const { data: order, error: insertError } = await admin
       .from("payment_orders")
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
         course_slug: courseSlug,
         currency,
         amount: price,
+        provider: "intasend",
         tx_ref: txRef,
         status: "pending"
       })
@@ -64,18 +66,23 @@ export async function POST(request: Request) {
 
     try {
       const origin = new URL(request.url).origin;
-      const link = await createFlutterwaveCheckout({
+      const customerName = String(user.user_metadata?.full_name ?? user.user_metadata?.name ?? "").trim().split(/\s+/);
+      const checkout = await createIntaSendCheckout({
         amount: price,
         currency,
         txRef,
         email: user.email,
-        name: user.user_metadata?.full_name ?? user.user_metadata?.name,
-        redirectUrl: `${origin}/api/payments/callback`,
-        courseSlug,
-        orderId: order.id
+        firstName: customerName[0],
+        lastName: customerName.slice(1).join(" "),
+        phoneNumber: typeof body.phoneNumber === "string" ? body.phoneNumber : undefined,
+        redirectUrl: `${origin}/api/payments/callback?ref=${encodeURIComponent(txRef)}`
       });
-      await admin.from("payment_orders").update({ payment_link: link, updated_at: new Date().toISOString() }).eq("id", order.id);
-      return NextResponse.json({ checkoutUrl: link });
+      await admin.from("payment_orders").update({
+        provider_invoice_id: checkout.invoiceId,
+        payment_link: checkout.checkoutUrl,
+        updated_at: new Date().toISOString()
+      }).eq("id", order.id);
+      return NextResponse.json({ checkoutUrl: checkout.checkoutUrl });
     } catch (error) {
       await admin.from("payment_orders").update({ status: "failed", updated_at: new Date().toISOString() }).eq("id", order.id);
       throw error;
@@ -83,11 +90,11 @@ export async function POST(request: Request) {
   } catch (error) {
     const reason = error instanceof Error ? error.message : "UNKNOWN";
     console.error("AJEY certificate checkout failed", { reason });
-    const status = reason === "PAYMENTS_ADMIN_NOT_CONFIGURED" || reason === "FLUTTERWAVE_NOT_CONFIGURED" ? 503 : 502;
+    const status = reason === "PAYMENTS_ADMIN_NOT_CONFIGURED" || reason === "INTASEND_NOT_CONFIGURED" ? 503 : 502;
     return NextResponse.json({
       error: reason === "PAYMENTS_ADMIN_NOT_CONFIGURED"
         ? "AJEY payment administration is not configured yet."
-        : reason === "FLUTTERWAVE_NOT_CONFIGURED"
+        : reason === "INTASEND_NOT_CONFIGURED"
           ? "AJEY payments are not connected yet."
           : "AJEY could not start checkout. Please try again."
     }, { status });
