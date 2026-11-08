@@ -14,6 +14,10 @@ const allowedCourses = new Set([
 
 export async function POST(request: Request) {
   try {
+    const origin = request.headers.get("origin");
+    if (origin && origin !== new URL(request.url).origin) {
+      return NextResponse.json({ error: "Cross-origin checkout requests are not allowed." }, { status: 403 });
+    }
     const auth = await createClient();
     if (!auth) return NextResponse.json({ error: "Authentication is not configured." }, { status: 503 });
     const { data: { user } } = await auth.auth.getUser();
