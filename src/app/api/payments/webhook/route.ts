@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   try {
     const payload = JSON.parse(rawBody);
     const transactionId = payload?.data?.id;
-    if (payload?.type === "charge.completed" && transactionId) {
+    if ((payload?.type === "charge.completed" || payload?.event === "charge.completed") && transactionId) {
       await completeVerifiedPayment(String(transactionId));
     }
     return NextResponse.json({ received: true });
