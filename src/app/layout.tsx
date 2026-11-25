@@ -10,13 +10,15 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const ajeyIcon = { url: "/ajey-logo.jpg?v=2", type: "image/jpeg" };
+
 export const metadata: Metadata = {
   title: "AJEY — Learn. Plan. Remember. Grow.",
   description: "Your intelligent learning and productivity companion.",
   icons: {
-    icon: "/ajey-logo.jpg",
-    shortcut: "/ajey-logo.jpg",
-    apple: "/ajey-logo.jpg",
+    icon: [ajeyIcon],
+    shortcut: [ajeyIcon],
+    apple: [ajeyIcon],
   },
 };
 
