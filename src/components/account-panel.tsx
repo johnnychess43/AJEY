@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
-import { Camera, Check, CircleUserRound, LockKeyhole, LogOut, Save, Settings2, ShieldCheck, UserRound } from "lucide-react";
+import { CircleUserRound, LockKeyhole, LogOut, Save, Settings2, ShieldCheck, UserRound } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 type Preferences = {
