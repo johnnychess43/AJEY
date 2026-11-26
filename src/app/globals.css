@@ -291,3 +291,46 @@ body { min-width: 320px; }
   .ajey-shell header > div:first-child > div > div:last-child { display: none; }
   .ajey-shell header > div:last-child > span { display: none; }
 }
+
+
+/* User-selected light appearance */
+html[data-theme="light"] body {
+  color: #242033;
+  background: radial-gradient(ellipse at 12% 0%, rgba(117,66,194,.08), transparent 36%), #f6f5fa;
+}
+html[data-theme="light"] .ajey-shell { color: #242033; }
+html[data-theme="light"] .ajey-shell aside,
+html[data-theme="light"] .ajey-shell header {
+  color: #242033 !important;
+  background: rgba(255,255,255,.97) !important;
+  border-color: #e8e4ef !important;
+}
+html[data-theme="light"] .ajey-shell .panel {
+  color: #242033 !important;
+  background: linear-gradient(145deg,#fff,#faf9fd) !important;
+  border-color: #e8e4ef !important;
+  box-shadow: 0 10px 32px rgba(35,25,60,.06) !important;
+}
+html[data-theme="light"] .ajey-shell h1,
+html[data-theme="light"] .ajey-shell h2,
+html[data-theme="light"] .ajey-shell h3,
+html[data-theme="light"] .ajey-shell label,
+html[data-theme="light"] .ajey-shell .font-bold,
+html[data-theme="light"] .ajey-shell .font-extrabold { color: #242033; }
+html[data-theme="light"] .ajey-shell input,
+html[data-theme="light"] .ajey-shell textarea,
+html[data-theme="light"] .ajey-shell select {
+  color: #242033 !important;
+  background: #fff !important;
+  border-color: #ded9e9 !important;
+}
+html[data-theme="light"] .ajey-shell nav button { color: #69647a !important; }
+html[data-theme="light"] .ajey-shell nav button[class*="bg-"] { color: #7358d6 !important; background: #f0edff !important; }
+html[data-theme="light"] .ajey-shell .lesson-notes { color: #514c61 !important; }
+html[data-theme="light"] .ajey-shell .video-result { color: #242033; background: #fff; border-color: #e8e4ef; }
+html[data-theme="light"] .ajey-shell [class*="text-[#9290a7]"],
+html[data-theme="light"] .ajey-shell [class*="text-[#aaa8b7]"],
+html[data-theme="light"] .ajey-shell [class*="text-[#aaa3b6]"],
+html[data-theme="light"] .ajey-shell [class*="text-[#77778e]"] { color: #777185 !important; }
+html[data-theme="light"] .ajey-shell footer { border-color: #e8e4ef !important; }
+html[data-theme="light"] .ajey-shell .panel .text-white { color: #242033 !important; }
