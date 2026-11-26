@@ -13,6 +13,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "AJEY — Learn. Plan. Remember. Grow.",
   description: "Your intelligent learning and productivity companion.",
+  icons: {
+    icon: [{ url: "/icon.svg?v=2", type: "image/svg+xml" }],
+    shortcut: ["/icon.svg?v=2"],
+  },
 };
 
 export default function RootLayout({
