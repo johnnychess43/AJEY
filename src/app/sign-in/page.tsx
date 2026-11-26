@@ -22,7 +22,7 @@ export default function SignInPage() {
       const supabase = createClient();
       if (mode === "signup") {
         const { data, error: authError } = await supabase.auth.signUp({
-          email, password, options: { data: { full_name: name } }
+          email, password, options: { data: { full_name: name, onboarding_completed: false } }
         });
         if (authError) throw authError;
         if (!data.session) {
