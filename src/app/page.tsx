@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import CertificatesPanel from "@/components/certificates-panel";
 import AccountPanel from "@/components/account-panel";
 import AccountMenu from "@/components/account-menu";
+import OnboardingGate from "@/components/onboarding-gate";
 import { Activity, Award, Bell, BookOpen, Bot, CalendarDays, Check, CheckCircle2, CircleHelp, Clock3, Flame, GraduationCap, Heart, LayoutDashboard, Menu, MessageCircle, Plus, Send, Settings, Sparkles, Target, Trophy, UserRound, X, Zap } from "lucide-react";
 
 type Task = { id: number; title: string; time: string; done: boolean; tag: string };
@@ -35,6 +36,7 @@ export default function Home() {
  async function sendMessage(){if(!message.trim()||busy)return;const text=message.trim();const next:Chat[]=[...chat,{role:"user",content:text}];setChat(next);setMessage("");setBusy(true);try{const r=await fetch("/api/assistant",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:next})});const d=await r.json();setChat(v=>[...v,{role:"assistant",content:d.reply||d.error||"Please try again."}]);}catch{setChat(v=>[...v,{role:"assistant",content:"I couldn't connect just now. Please try again."}]);}finally{setBusy(false);}}
  const heading=useMemo(()=>nav.find(n=>n.label===active)?.label??"Overview",[active]);
  return <div className="ajey-shell min-h-screen lg:flex">
+  <OnboardingGate/>
   <aside className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-[#eeedf5] bg-white p-5 transition-transform lg:static lg:translate-x-0 ${mobile?"translate-x-0":"-translate-x-full"}`}>
    <div className="mb-9 flex items-center justify-between"><div className="flex items-center gap-3"><img src="/ajey-logo.jpg" alt="AJEY — Since 2026" className="h-[82px] w-[104px] rounded-xl object-contain" /><div className="sr-only"><div className="text-xl font-black tracking-tight">AJEY</div><div className="text-[9px] font-bold tracking-[.2em] text-[#9996ad]">LEARN · PLAN · GROW</div></div></div><button className="lg:hidden" onClick={()=>setMobile(false)}><X/></button></div>
    <div className="mb-3 px-3 text-[9px] font-extrabold tracking-[.2em] text-[#aaa8b7]">YOUR WORKSPACE</div>
