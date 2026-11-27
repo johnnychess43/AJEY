@@ -49,6 +49,7 @@ export async function POST(request: Request) {
       provider: "intasend",
       provider_customer_id: subscription.customerId,
       provider_subscription_id: subscription.subscriptionId,
+      setup_url: subscription.setupUrl,
       reference,
       status: subscription.status.toLowerCase() === "active" ? "active" : "pending",
       amount: 50,
