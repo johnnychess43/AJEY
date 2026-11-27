@@ -19,6 +19,7 @@ export default function NotesPodcastPanel() {
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [audioUrl,setAudioUrl]=useState<Record<string,string>>({});
+  const [generatingAudio,setGeneratingAudio]=useState<string|null>(null);
   const [expanded,setExpanded]=useState<string|null>(null);
   const input=useRef<HTMLInputElement>(null);
 
@@ -60,6 +61,18 @@ export default function NotesPodcastPanel() {
       if(!response.ok)throw new Error(result.error||"Audio is unavailable.");
       setAudioUrl(v=>({...v,[id]:result.url}));
     } catch(e) {setError(e instanceof Error?e.message:"Could not open audio.");}
+  }
+
+  async function generateAudio(id:string) {
+    setGeneratingAudio(id);setError("");
+    try {
+      const response=await fetch(`/api/documents/${id}/audio/generate`,{method:"POST"});
+      const result=await response.json();
+      if(!response.ok)throw new Error(result.error||"Could not generate podcast audio.");
+      await load();
+      await listen(id);
+    } catch(e) {setError(e instanceof Error?e.message:"Could not generate podcast audio.");}
+    finally {setGeneratingAudio(null);}
   }
 
   async function upgrade() {
@@ -129,7 +142,7 @@ export default function NotesPodcastPanel() {
           {doc.summary&&<div><h3 className="mb-2 text-xs font-extrabold text-[#e7c76c]">SUMMARY</h3><p className="whitespace-pre-wrap text-xs leading-6 text-[#d5cddd]">{doc.summary}</p></div>}
           {!!doc.questions?.length&&<div><h3 className="mb-3 text-xs font-extrabold text-[#e7c76c]">REVISION QUESTIONS</h3><div className="space-y-3">{doc.questions.map((q,i)=><details key={i} className="rounded-xl bg-[#1d1926] p-3"><summary className="cursor-pointer text-xs font-bold text-[#eeeaf5]">{i+1}. {q.question}</summary><p className="mt-3 text-xs leading-5 text-[#aaa3b6]">{q.answer}</p></details>)}</div></div>}
           {doc.audio_path?<div><h3 className="mb-2 text-xs font-extrabold text-[#e7c76c]">YOUR AUDIO PODCAST</h3>{audioUrl[doc.id]?<audio controls className="w-full" src={audioUrl[doc.id]}/>:
-            <button onClick={()=>void listen(doc.id)} className="gold-button rounded-lg px-4 py-2 text-xs font-bold"><Headphones className="mr-2 inline" size={14}/>Listen to podcast</button>}</div>:doc.podcast_script?<div><h3 className="mb-2 text-xs font-extrabold text-[#e7c76c]">PODCAST SCRIPT</h3><p className="whitespace-pre-wrap text-xs leading-6 text-[#d5cddd]">{doc.podcast_script}</p><p className="mt-2 text-[10px] text-[#aaa3b6]">Audio could not be generated for this note, but your podcast script is saved.</p></div>:doc.processing_status==="ready"&&<p className="text-[11px] text-[#aaa3b6]">Your summary and questions are ready.</p>}
+            <button onClick={()=>void listen(doc.id)} className="gold-button rounded-lg px-4 py-2 text-xs font-bold"><Headphones className="mr-2 inline" size={14}/>Listen to podcast</button>}</div>:doc.podcast_script?<div><h3 className="mb-2 text-xs font-extrabold text-[#e7c76c]">YOUR PODCAST</h3><p className="whitespace-pre-wrap text-xs leading-6 text-[#d5cddd]">{doc.podcast_script}</p><button disabled={generatingAudio===doc.id} onClick={()=>void generateAudio(doc.id)} className="gold-button mt-3 rounded-lg px-4 py-2 text-xs font-bold disabled:opacity-50">{generatingAudio===doc.id?<><LoaderCircle className="mr-2 inline animate-spin" size={14}/>Generating audio…</>:<><Headphones className="mr-2 inline" size={14}/>Generate audio podcast</>}</button><p className="mt-2 text-[10px] text-[#aaa3b6]">The script is saved. Generate the audio whenever ready.</p></div>:doc.processing_status==="ready"&&<p className="text-[11px] text-[#aaa3b6]">Your summary and questions are ready.</p>}
         </div>}
       </article>)}
     </section>
