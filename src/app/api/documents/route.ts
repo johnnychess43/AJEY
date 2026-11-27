@@ -13,7 +13,7 @@ export async function GET() {
   if (error) return NextResponse.json({ error: "Could not load your uploaded notes." }, { status: 500 });
   return NextResponse.json({
     documents: documents ?? [],
-    plan: subscription?.status === "active" ? "premium" : "basic",
+    plan: subscription?.status === "active" && (!subscription.next_billing_date || subscription.next_billing_date >= new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Nairobi" }).format(new Date())) ? "premium" : "basic",
     limit: subscription?.status === "active" ? null : 11,
     used: documents?.length ?? 0
   });
