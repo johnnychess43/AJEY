@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { generateNvidiaPodcastAudio } from "@/lib/nvidia-tts";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -26,52 +27,24 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: "This note has no podcast script yet. Process the document first." }, { status: 409 });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) return NextResponse.json({ error: "Audio generation is not configured. Add OPENAI_API_KEY to the AJEY Vercel environment variables." }, { status: 503 });
-
-  const preferredModel = process.env.OPENAI_TTS_MODEL?.trim() || "gpt-4o-mini-tts";
-  const models = [...new Set([preferredModel, "tts-1"])];
-  let audio: Buffer | null = null;
-  let lastStatus = 0;
-
-  for (const model of models) {
-    const body: Record<string, string> = {
-      model,
-      voice: "alloy",
-      input: document.podcast_script,
-      response_format: "mp3"
-    };
-    if (model === "gpt-4o-mini-tts") {
-      body.instructions = "Speak warmly and clearly like a friendly educational podcast with natural pacing.";
-    }
-
-    const response = await fetch("https://api.openai.com/v1/audio/speech", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      cache: "no-store",
-      signal: AbortSignal.timeout(45000)
-    });
-    if (response.ok) {
-      audio = Buffer.from(await response.arrayBuffer());
-      break;
-    }
-    lastStatus = response.status;
-    console.error("AJEY podcast audio attempt failed", { model, status: response.status });
+  let audio: Buffer;
+  try {
+    audio = await generateNvidiaPodcastAudio(document.podcast_script);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "NVIDIA_TTS_REQUEST_FAILED";
+    const message =
+      reason === "NVIDIA_TTS_NOT_CONFIGURED" ? "NVIDIA TTS is not configured. Add NVIDIA_TTS_API_KEY to the AJEY Vercel environment variables." :
+      reason === "NVIDIA_TTS_AUTH_FAILED" ? "NVIDIA rejected the TTS key. Check that the key has access to the Magpie TTS model." :
+      reason === "NVIDIA_TTS_RATE_LIMITED" ? "NVIDIA TTS rate limit reached. Please wait a moment and try again." :
+      "AJEY could not generate audio with NVIDIA right now. Your podcast script is safe; please try again.";
+    console.error("AJEY NVIDIA podcast generation failed", { reason });
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 
-  if (!audio?.length) {
-    return NextResponse.json({
-      error: lastStatus === 401 ? "The OpenAI API key was rejected. Check the server-side OPENAI_API_KEY in Vercel." :
-        lastStatus === 429 ? "The OpenAI audio service is busy or has insufficient quota. Check API billing and try again." :
-        "AJEY could not generate audio right now. Your podcast script is safe; please try again later."
-    }, { status: 502 });
-  }
-
-  const audioPath = `${user.id}/audio/${id}.mp3`;
+  const audioPath = `${user.id}/audio/${id}.wav`;
   const { error: uploadError } = await admin.storage
     .from("ajey-member-notes")
-    .upload(audioPath, audio, { contentType: "audio/mpeg", upsert: true });
+    .upload(audioPath, audio, { contentType: "audio/wav", upsert: true });
   if (uploadError) {
     console.error("AJEY podcast audio storage failed", { message: uploadError.message });
     return NextResponse.json({ error: "Audio was generated but could not be saved. Check the private notes storage bucket configuration." }, { status: 500 });
