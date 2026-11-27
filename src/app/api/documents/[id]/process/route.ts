@@ -52,7 +52,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     if (extracted.length > 90000) extracted = extracted.slice(0, 90000);
 
     const generated = await generateAIText([
-      { role: "system", content: "You are AJEY, an expert study coach. Analyze only the supplied document. Return valid JSON only, with keys summary (clear, structured study summary), questions (array of 8 objects each with question, answer, and type; mix recall and understanding), and podcast_script (a friendly two-host educational podcast script, 2 to 4 minutes, no markdown, maximum 3500 characters). Do not invent facts not present in the notes." },
+      { role: "system", content: "You are AJEY, an expert study coach. Analyze only the supplied document. Return valid JSON only, with keys summary (clear, structured study summary), questions (array of 8 objects each with question, answer, and type; mix recall and understanding), and podcast_script (a friendly single-narrator educational podcast script, 2 to 4 minutes, no markdown, maximum 3500 characters). Do not invent facts not present in the notes." },
       { role: "user", content: `Document title: ${document.title}\n\nDOCUMENT TEXT:\n${extracted}` }
     ], { maxTokens: 5000, temperature: 0.35 });
     const result = extractJson(generated.text);
