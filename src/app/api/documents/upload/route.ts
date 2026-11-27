@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   const extension = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
   const mimeType = TYPES[extension];
   if (!mimeType) return NextResponse.json({ error: "Supported formats: PDF, DOCX, TXT and RTF." }, { status: 415 });
-  if (file.type && file.type !== mimeType && !(extension === ".txt" && file.type === "application/octet-stream")) {
+  if (file.type && file.type !== mimeType && !(extension === ".txt" && file.type === "application/octet-stream") && !(extension === ".rtf" && file.type === "application/rtf")) {
     return NextResponse.json({ error: "The file type does not match its extension." }, { status: 415 });
   }
 
