@@ -1,10 +1,11 @@
 "use client";
 import { useMemo, useState } from "react";
 import CertificatesPanel from "@/components/certificates-panel";
+import NotesPodcastPanel from "@/components/notes-podcast-panel";
 import AccountPanel from "@/components/account-panel";
 import AccountMenu from "@/components/account-menu";
 import OnboardingGate from "@/components/onboarding-gate";
-import { Activity, Award, Bell, BookOpen, Bot, CalendarDays, Check, CheckCircle2, CircleHelp, Clock3, Flame, GraduationCap, Heart, LayoutDashboard, Menu, MessageCircle, Plus, Send, Settings, Sparkles, Target, Trophy, UserRound, X, Zap } from "lucide-react";
+import { Activity, Award, Bell, BookOpen, Bot, CalendarDays, Check, CheckCircle2, CircleHelp, Clock3, FileAudio, Flame, GraduationCap, Heart, LayoutDashboard, Menu, MessageCircle, Plus, Send, Settings, Sparkles, Target, Trophy, UserRound, X, Zap } from "lucide-react";
 
 type Task = { id: number; title: string; time: string; done: boolean; tag: string };
 type Chat = { role: "user" | "assistant"; content: string };
@@ -18,7 +19,7 @@ const initialTasks: Task[] = [
 const nav = [
  {label:"Overview",icon:LayoutDashboard},{label:"AI Assistant",icon:Bot},{label:"My Learning",icon:BookOpen},
  {label:"My Planner",icon:CalendarDays},{label:"Reminders",icon:Bell},{label:"My Goals",icon:Target},
- {label:"Progress",icon:Activity},{label:"Profile",icon:UserRound},{label:"Certificates",icon:Award},{label:"Settings",icon:Settings}
+ {label:"Progress",icon:Activity},{label:"Notes Podcast",icon:FileAudio},{label:"Profile",icon:UserRound},{label:"Certificates",icon:Award},{label:"Settings",icon:Settings}
 ];
 const courses = [
  {name:"Foundations of Data Science",topic:"DATA & ANALYTICS",progress:68,color:"#6c8de8",icon:"📊"},
@@ -60,6 +61,7 @@ export default function Home() {
     {active==="Reminders"&&<section className="panel max-w-2xl p-6"><h1 className="text-xl font-black">Your reminders</h1><p className="mt-1 text-xs text-[#9290a7]">Keep important events and deadlines close.</p>{reminders.map((r,i)=><div key={i} className="mt-3 flex items-center gap-3 rounded-xl bg-[#fbfaff] p-4"><Bell className="text-[#c28a2d]" size={17}/><div className="flex-1 text-xs font-bold">{r}</div><button onClick={()=>setReminders(v=>v.filter((_,j)=>i!==j))} className="text-[10px] text-[#aaa8b7]">Remove</button></div>)}<div className="mt-5 flex gap-2"><input value={reminderDraft} onChange={e=>setReminderDraft(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addReminder()} placeholder="Add a reminder…" className="min-w-0 flex-1 rounded-xl border border-[#eeedf5] px-3 py-3 text-xs"/><button onClick={addReminder} className="rounded-xl bg-[#7358d6] px-4 text-xs font-bold text-white">Add</button></div><p className="mt-3 text-[10px] text-[#aaa8b7]">Demo reminders are stored in page state until Supabase and notification delivery are configured.</p></section>}
     {active==="My Goals"&&<section className="panel max-w-2xl p-6"><div className="mb-3 flex items-center gap-2"><Target className="text-[#765bd7]"/><h1 className="text-xl font-black">Your main goal</h1></div><div className="rounded-xl bg-[#f6f3ff] p-4 text-sm font-bold">{goal}</div><div className="mt-4 flex gap-2"><input value={goalDraft} onChange={e=>setGoalDraft(e.target.value)} placeholder="Set or update your goal…" className="min-w-0 flex-1 rounded-xl border border-[#eeedf5] px-3 py-3 text-xs"/><button onClick={()=>{if(goalDraft.trim()){setGoal(goalDraft.trim());setGoalDraft("")}}} className="rounded-xl bg-[#7358d6] px-4 text-xs font-bold text-white">Save</button></div></section>}
     {active==="Progress"&&<section className="panel max-w-2xl p-6 md:p-8"><div className="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-[#f0edff] text-[#765bd7]"><GraduationCap size={24}/></div><h1 className="text-xl font-black">Your learning progress</h1><p className="mt-2 text-sm leading-6 text-[#9290a7]">Your learning statistics will appear here after you choose a course and begin completing its units and lessons. Progress is based on your actual completed learning activities.</p><button onClick={()=>setActive("My Learning")} className="mt-5 rounded-xl bg-[#7358d6] px-5 py-3 text-xs font-bold text-white">Explore learning paths →</button></section>}
+    {active==="Notes Podcast"&&<NotesPodcastPanel/>}
     {active==="Profile"&&<AccountPanel mode="profile"/>}
     {active==="Certificates"&&<CertificatesPanel/>}
     {active==="Settings"&&<AccountPanel mode="settings"/>}
