@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     const admin = createAdminClient();
     const { data: existing } = await admin.from("member_subscriptions")
-      .select("status,provider_subscription_id")
+      .select("status,provider_subscription_id,setup_url")
       .eq("user_id", user.id).maybeSingle();
     if (existing?.status === "active") {
       return NextResponse.json({ error: "Your AJEY Premium membership is already active." }, { status: 409 });
