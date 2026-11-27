@@ -6,7 +6,7 @@ import { FileAudio, FileText, Headphones, LoaderCircle, LockKeyhole, Sparkles, U
 type Question = { question: string; answer: string; type?: string };
 type DocumentItem = {
   id: string; title: string; original_filename: string; file_size: number;
-  summary: string | null; questions: Question[]; audio_path: string | null;
+  summary: string | null; questions: Question[]; podcast_script: string | null; audio_path: string | null;
   processing_status: "uploaded" | "processing" | "ready" | "failed";
   processing_error: string | null; created_at: string;
 };
